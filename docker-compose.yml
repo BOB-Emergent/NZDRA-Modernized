@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  backend:
+    build: .
+    ports:
+      - "8001:8001"
+    environment:
+      - JWT_SECRET=${JWT_SECRET:-nzdra-dev-secret}
+    volumes:
+      - ./data:/app/data

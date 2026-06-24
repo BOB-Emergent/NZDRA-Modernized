@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.*
+*.sqlite
+.ruff_cache/
+test_reports/
+build/
+dist/
+__pycache__/
+*.pyc
+.DS_Store
