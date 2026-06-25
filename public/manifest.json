@@ -1,0 +1,9 @@
+{
+  "short_name": "NZDRA",
+  "name": "New Zealand Drag Racing Association",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#c0392b",
+  "background_color": "#1a1a1a"
+}
