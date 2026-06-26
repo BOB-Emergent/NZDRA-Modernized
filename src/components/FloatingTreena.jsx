@@ -1,18 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
-import { X, Send, Loader2 } from "lucide-react";
+import { X, Send, Loader2, Sparkles } from "lucide-react";
 import { api } from "../lib/api";
 
 export default function FloatingTreena() {
     const [open, setOpen] = useState(false);
     const [sessionId] = useState(() => `floating_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
     const [messages, setMessages] = useState([
-        { role: "assistant", content: "Kia ora \u2014 Treena here, NZDRA Tech Official. Ask me any rule." },
+        { role: "assistant", content: "Kia ora — Treena here, NZDRA Tech Official. Ask me any rule." },
     ]);
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
     const endRef = useRef(null);
 
-    useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending, open]);
+    useEffect(() => { 
+        if (open) endRef.current?.scrollIntoView({ behavior: "smooth" }); 
+    }, [messages, sending, open]);
 
     const send = async () => {
         if (!input.trim() || sending) return;
@@ -22,105 +24,51 @@ export default function FloatingTreena() {
         setSending(true);
         try {
             const { data } = await api.post("/chat/rulebook", { session_id: sessionId, message: msg });
-            setMessages((m) => [...m, { role: "assistant", content: data.response }]);
+            setMessages((m) => [...m, { role: "assistant", content: data?.response || "I couldn't find that in the rulebook right now." }]);
         } catch {
             setMessages((m) => [...m, { role: "assistant", content: "I'm offline right now. Try again shortly." }]);
         } finally { setSending(false); }
     };
 
     return (
-        <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 9999 }} data-testid="floating-trina">
+        <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 999999 }} data-testid="floating-trina">
             {open && (
-                <div
-                    style={{
-                        width: 360, height: 520, backgroundColor: "#0a0a0a",
-                        border: "2px solid #dc2626", borderRadius: 12, marginBottom: 12,
-                        display: "flex", flexDirection: "column",
-                        boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
-                    }}
-                    data-testid="floating-trina-panel"
-                >
-                    <div style={{
-                        padding: "12px 16px", background: "#dc2626", borderRadius: "10px 10px 0 0",
-                        display: "flex", justifyContent: "space-between", alignItems: "center",
-                    }}>
-                        <span style={{ color: "white", fontWeight: 700, fontFamily: "'Anton', Impact, sans-serif", letterSpacing: 2, textTransform: "uppercase" }}>
-                            Treena \u00b7 NZDRA Tech Official
+                <div className="flex flex-col bg-zinc-950 border-2 border-nzdra-red rounded-xl shadow-2xl mb-3 overflow-hidden animate-in slide-in-from-bottom-2 duration-300" style={{ width: 360, height: 520 }}>
+                    <div className="p-4 bg-nzdra-red flex items-center justify-between">
+                        <span className="text-white font-display uppercase tracking-widest text-sm">
+                            Treena · NZDRA Tech Official
                         </span>
-                        <button onClick={() => setOpen(false)} aria-label="Close" style={{ background: "none", border: "none", color: "white", cursor: "pointer", padding: 0 }} data-testid="floating-trina-close">
-                            <X size={18} />
-                        </button>
+                        <button onClick={() => setOpen(false)} className="text-white/80 hover:text-white"><X size={20} /></button>
                     </div>
-                    <div style={{ flex: 1, overflowY: "auto", padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
                         {messages.map((m, i) => (
-                            <div key={i} style={{
-                                alignSelf: m.role === "user" ? "flex-end" : "flex-start",
-                                maxWidth: "85%",
-                                padding: "8px 12px",
-                                fontSize: 13,
-                                lineHeight: 1.5,
-                                color: m.role === "user" ? "#fff" : "#e4e4e7",
-                                background: m.role === "user" ? "#27272a" : "#18181b",
-                                border: m.role === "user" ? "none" : "1px solid rgba(245,158,11,0.25)",
-                            }}>
-                                {m.content}
+                            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                                <div className={`max-w-[85%] p-3 text-xs ${m.role === "user" ? "bg-nzdra-red text-white" : "bg-zinc-800 text-zinc-300"}`}>
+                                    {m.content}
+                                </div>
                             </div>
                         ))}
-                        {sending && (
-                            <div style={{ color: "#a1a1aa", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
-                                <Loader2 size={12} className="animate-spin" /> Treena is thinking\u2026
-                            </div>
-                        )}
+                        {sending && <div className="text-zinc-500 text-[10px] animate-pulse uppercase tracking-widest font-mono">Thinking...</div>}
                         <div ref={endRef} />
                     </div>
-                    <div style={{ borderTop: "1px solid rgba(220,38,38,0.3)", padding: 10, display: "flex", gap: 8 }}>
-                        <input
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && send()}
-                            placeholder="Ask Treena about NZDRA rules\u2026"
-                            data-testid="floating-trina-input"
-                            style={{
-                                flex: 1, background: "#0a0a0a", border: "1px solid #27272a",
-                                color: "#fff", padding: "6px 10px", fontSize: 13, outline: "none",
-                            }}
-                        />
-                        <button
-                            onClick={send}
-                            disabled={!input.trim() || sending}
-                            data-testid="floating-trina-send"
-                            style={{
-                                background: "#f59e0b", border: "none", padding: "0 12px",
-                                color: "#000", cursor: input.trim() ? "pointer" : "not-allowed",
-                                opacity: input.trim() ? 1 : 0.4,
-                            }}
-                        >
-                            <Send size={14} />
-                        </button>
+                    <div className="p-3 bg-black/40 border-t border-white/10">
+                        <div className="relative flex gap-2">
+                            <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} placeholder="Ask a rule..." className="flex-1 bg-zinc-900 border border-zinc-700 text-white px-3 py-2 text-xs focus:outline-none focus:border-nzdra-red" />
+                            <button onClick={send} className="bg-nzdra-red p-2 text-white hover:bg-red-700 transition-colors"><Send size={16} /></button>
+                        </div>
                     </div>
                 </div>
             )}
-            <button
-                onClick={() => setOpen(!open)}
-                aria-label={open ? "Close Treena" : "Open Treena"}
-                title="Treena \u2014 NZDRA Rulebook AI"
-                data-testid="floating-trina-bubble"
-                style={{
-                    width: 56, height: 56, borderRadius: "50%",
-                    background: "#dc2626", border: "2px solid #0a0a0a",
-                    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                    boxShadow: "0 4px 20px rgba(220,38,38,0.5)",
-                    transition: "transform 0.15s ease",
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.08)"}
-                onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
-            >
-                {open ? (
-                    <X size={24} color="white" />
-                ) : (
-                    <span style={{ color: "white", fontSize: 26, fontWeight: 900, fontFamily: "'Anton', Impact, sans-serif" }}>T</span>
-                )}
-            </button>
+            {!open && (
+                <button 
+                    onClick={() => setOpen(true)} 
+                    className="group relative w-16 h-16 bg-nzdra-red rounded-full flex items-center justify-center shadow-[0_10px_40px_rgba(220,38,38,0.5)] hover:scale-105 active:scale-95 transition-all"
+                >
+                    <div className="absolute inset-0 bg-white/20 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300" />
+                    <Sparkles size={28} className="text-white" />
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full border-2 border-zinc-950 animate-bounce" />
+                </button>
+            )}
         </div>
     );
 }

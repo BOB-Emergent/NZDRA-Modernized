@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import LicensePrintExport from "../components/LicensePrintExport";
 import { QRCodeSVG } from "qrcode.react";
 import { Loader2, AlertTriangle, LogOut } from "lucide-react";
@@ -15,16 +15,29 @@ export default function RacerDashboard() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
+    // Auto-check for query param verification
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const verifyNum = params.get("verify");
+        if (verifyNum && MOCK_RACERS[verifyNum]) {
+            setRacer(MOCK_RACERS[verifyNum]);
+            setMemberNum(verifyNum);
+        }
+    }, []);
+
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         setLoading(true); setError(""); setRacer(null);
-        const mock = MOCK_RACERS[memberNum];
+        
+        const cleanNum = memberNum.trim();
+        const mock = MOCK_RACERS[cleanNum];
+        
         if (mock) { 
             setRacer(mock); 
         } else {
             try { 
-                const res = await api.get(`/api/racers/${memberNum}`); 
-                if (res.data && res.data.memberNumber) {
+                const res = await api.get(`/racers/${cleanNum}`); 
+                if (res?.data && (res.data.memberNumber || res.data.firstName)) {
                     setRacer(res.data); 
                 } else {
                     setError("Member not found. Try 8027 or 8041.");
@@ -39,7 +52,7 @@ export default function RacerDashboard() {
     const handleLogout = () => { setRacer(null); setMemberNum(""); setError(""); };
 
     return (
-        <div className="max-w-[1100px] mx-auto px-6 md:px-12 py-16" data-testid="racer-dashboard-page">
+        <div className="max-w-[1100px] mx-auto px-6 md:px-12 py-16 min-h-screen" data-testid="racer-dashboard-page">
             <div className="font-mono text-xs uppercase tracking-[0.4em] text-nzdra-red mb-3">Racer Portal</div>
             <h1 className="font-display text-5xl md:text-7xl uppercase tracking-tighter text-white">Your License</h1>
             <p className="mt-4 text-zinc-400 max-w-2xl">Enter your NZDRA member number to view your digital racing license.</p>
@@ -71,13 +84,12 @@ const LICENSE_BG = "https://customer-assets.emergentagent.com/wingman/0bd5dc57-0
 
 function LicenseCard({ racer }) {
     const cardRef = useRef(null);
-    const isActive = racer.status === "ACTIVE";
+    const isActive = (racer.status || "").toUpperCase() === "ACTIVE";
     return (
         <div className="flex flex-col items-center w-full max-w-[700px] mx-auto">
             <div data-testid="license-card" ref={cardRef} className="relative w-full aspect-[1500/950] rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-transparent">
                 <img src={LICENSE_BG} alt="" className="absolute inset-0 w-full h-full object-fill z-0 select-none"/>
                 
-                {/* The White Data Box */}
                 <div style={{position:"absolute",top:"16.32%",left:"3.73%",width:"62.2%",height:"69.37%",backgroundColor:"#ffffff",borderRadius:"4px",border:"1px solid #000",overflow:"visible",zIndex:1,fontFamily:"'Arial Black','Arimo',sans-serif",fontWeight:"bold"}}>
                     <span style={{position:"absolute",left:"4.7%",top:"14.4%",fontSize:"17pt",fontWeight:"bold",color:"#FF0000"}}>{racer.class || "Associate Member"}</span>
                     <span style={{position:"absolute",left:"79.7%",top:"14.4%",fontSize:"17pt",fontWeight:"bold",color:"#000"}}>{racer.memberNumber||""}</span>
@@ -97,7 +109,6 @@ function LicenseCard({ racer }) {
                     <span style={{position:"absolute",left:"36.9%",top:"87.3%",fontSize:"12pt",color:"#000"}}>{racer.vehicle2||""}</span>
                 </div>
 
-                {/* Racer Photo Area */}
                 <div style={{position:"absolute",top:"30.21%",left:"70%",width:"26.33%",height:"55.47%",borderRadius:"6px",overflow:"hidden",backgroundColor:"transparent",zIndex:1}}>
                     {racer.photo ? (
                         <img src={racer.photo} alt="Racer" style={{width:"100%",height:"100%",objectFit:"cover",border:"none",boxShadow:"none",outline:"none"}}/>
@@ -106,7 +117,6 @@ function LicenseCard({ racer }) {
                     )}
                 </div>
 
-                {/* Status Badge Over Template */}
                 <div style={{position:"absolute",top:"74.84%",left:"71.53%",width:"23.33%",height:"8.42%",alignItems:"center",display:"flex",justifyContent:"center",zIndex:3}}>
                     <span className={`px-4 py-1 rounded-full text-white text-[10px] font-bold uppercase tracking-widest ${isActive ? "bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.4)]" : "bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)]"}`} data-print-hide="badge">
                         {isActive ? "ACTIVE" : "EXPIRED"}
@@ -114,13 +124,12 @@ function LicenseCard({ racer }) {
                 </div>
             </div>
 
-            {/* Actions & QR Footer */}
             <div className="w-full bg-white rounded-b-xl p-8 flex flex-col items-center justify-center text-center shadow-lg mt-3" data-testid="license-qr-section">
-                <div className="mb-6 animate-in zoom-in duration-500" data-print-hide="qr">
+                <div className="mb-6" data-print-hide="qr">
                     <QRCodeSVG value={`https://nzdra.amw.net.nz/dashboard?verify=${racer.memberNumber||""}`} size={140} level="H" />
                     <p className="mt-3 text-[10px] font-mono uppercase tracking-widest text-zinc-400">Secure Verification ID</p>
                 </div>
-                <LicensePrintExport cardRef={cardRef} memberNumber={racer.memberNumber} />
+                {LicensePrintExport ? <LicensePrintExport cardRef={cardRef} memberNumber={racer.memberNumber} /> : null}
             </div>
         </div>
     );

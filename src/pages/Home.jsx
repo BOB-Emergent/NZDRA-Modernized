@@ -16,13 +16,13 @@ export default function Home() {
     useEffect(() => {
         const today = new Date().toISOString().slice(0, 10);
         api.get("/events", { params: { from_date: today } })
-            .then((r) => setNextEvents(Array.isArray(r.data) ? r.data.slice(0, 4) : []))
+            .then((r) => setNextEvents(Array.isArray(r?.data) ? r.data.slice(0, 4) : []))
             .catch(() => setNextEvents([]));
         api.get("/news", { params: { limit: 3 } })
-            .then((r) => setLatestNews(Array.isArray(r.data) ? r.data : []))
+            .then((r) => setLatestNews(Array.isArray(r?.data) ? r.data : []))
             .catch(() => setLatestNews([]));
         api.get("/results", { params: { limit: 5 } })
-            .then((r) => setLatestResults(Array.isArray(r.data) ? r.data : []))
+            .then((r) => setLatestResults(Array.isArray(r?.data) ? r.data : []))
             .catch(() => setLatestResults([]));
     }, []);
 

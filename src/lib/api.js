@@ -14,10 +14,10 @@ api.interceptors.request.use((config) => {
 // Prevent crash if API returns HTML (e.g. on 404/redirect) instead of JSON
 api.interceptors.response.use(
     (response) => {
-        // If we expect JSON but get HTML, return an empty array/object to prevent .map crashes
+        // If we expect JSON but get HTML, return null to prevent property access crashes
         if (typeof response.data === "string" && response.data.trim().startsWith("<!DOCTYPE")) {
             console.warn("API returned HTML instead of JSON for:", response.config.url);
-            return { ...response, data: [] };
+            return { ...response, data: null };
         }
         return response;
     },

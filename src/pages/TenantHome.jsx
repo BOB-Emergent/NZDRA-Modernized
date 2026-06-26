@@ -11,24 +11,24 @@ export default function TenantHome() {
     const [results, setResults] = useState([]);
 
     useEffect(() => {
-        if (!tenant) return;
+        if (!tenant || !tenant.track) return;
         const today = new Date().toISOString().slice(0, 10);
         api.get("/events", { params: { track: tenant.track, from_date: today } })
-            .then((r) => setEvents(Array.isArray(r.data) ? r.data.slice(0, 6) : []))
+            .then((r) => setEvents(Array.isArray(r?.data) ? r.data.slice(0, 6) : []))
             .catch(() => setEvents([]));
         api.get("/results", { params: { track: tenant.track, limit: 8 } })
-            .then((r) => setResults(Array.isArray(r.data) ? r.data : []))
+            .then((r) => setResults(Array.isArray(r?.data) ? r.data : []))
             .catch(() => setResults([]));
     }, [tenant]);
 
-    if (loading) return <div className="p-16 text-zinc-400">Loading tenant…</div>;
-    if (!tenant) return <div className="p-16 text-zinc-400">Tenant not found.</div>;
+    if (loading) return <div className="p-16 text-zinc-400 bg-zinc-950 min-h-screen">Loading tenant…</div>;
+    if (!tenant || !tenant.name) return <div className="p-16 text-zinc-400 bg-zinc-950 min-h-screen">Tenant not found.</div>;
 
     const primary = tenant.brand?.primary_color || "#dc2626";
     const accent = tenant.brand?.accent_color || "#0a0a0a";
 
     return (
-        <div data-testid={`tenant-home-${tenant.slug}`}>
+        <div data-testid={`tenant-home-${tenant.slug}`} className="bg-zinc-950 min-h-screen">
             <section className="relative overflow-hidden border-b border-white/10">
                 <div className="absolute inset-x-0 top-0 h-2" style={{ background: primary }} />
                 <div className="relative max-w-[1400px] mx-auto px-6 md:px-12 py-24 md:py-32">
@@ -37,9 +37,9 @@ export default function TenantHome() {
                         animate={{ opacity: 1, y: 0 }}
                         className="font-display text-4xl sm:text-5xl lg:text-7xl uppercase tracking-tighter text-white"
                     >
-                        {tenant.name}
+                        {tenant.name || "NZDRA Track"}
                     </motion.h1>
-                    <p className="mt-6 text-lg text-zinc-300 max-w-2xl">{tenant.hero_copy}</p>
+                    <p className="mt-6 text-lg text-zinc-300 max-w-2xl">{tenant.hero_copy || ""}</p>
                 </div>
             </section>
 
