@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../lib/auth";
 import { api } from "../lib/api";
 import { Navigate } from "react-router-dom";
-import { Calendar as CalIcon, Trophy, BookOpen, Newspaper, Users, Plus, Trash2, CheckCircle2, AlertTriangle, Repeat, Edit3, ClipboardList } from "lucide-react";
+import { Calendar as CalIcon, Trophy, BookOpen, Newspaper, Users, ClipboardList } from "lucide-react";
 
 export default function AdminDashboard() {
     const { user, loading } = useAuth();
@@ -10,7 +10,7 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState({});
 
     useEffect(() => {
-        if (user) api.get("/admin/stats").then((r) => setStats(r.data)).catch(() => {});
+        if (user) api.get("/admin/stats").then((r) => setStats(r.data || {})).catch(() => {});
     }, [user]);
 
     if (loading) return <div className="p-12 text-zinc-400">Loading…</div>;
@@ -33,12 +33,11 @@ export default function AdminDashboard() {
                     <div className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Logged in as</div>
                     <div className="text-sm text-white font-semibold">{user.name}</div>
                     <div className="font-mono text-[10px] text-amber-500 uppercase tracking-widest">
-                        {user.role.replace("_", " ")}{user.track ? ` · ${user.track}` : ""}
+                        {(user.role || "").replace("_", " ")}{user.track ? ` · ${user.track}` : ""}
                     </div>
                 </div>
             </div>
 
-            {/* Stats */}
             <div className="mt-10 grid grid-cols-2 md:grid-cols-5 gap-3">
                 {[
                     { label: "Events", v: stats.events, i: CalIcon },
@@ -55,13 +54,11 @@ export default function AdminDashboard() {
                 ))}
             </div>
 
-            {/* Tabs */}
             <div className="mt-10 flex gap-1 border-b border-zinc-800">
                 {tabs.map((t) => (
                     <button
                         key={t.id}
                         onClick={() => setTab(t.id)}
-                        data-testid={`admin-tab-${t.id}`}
                         className={`px-5 py-3 text-xs uppercase tracking-widest border-b-2 transition-colors flex items-center gap-2 ${
                             tab === t.id
                                 ? "border-nzdra-red text-white"
@@ -73,13 +70,7 @@ export default function AdminDashboard() {
                 ))}
             </div>
 
-            <div className="mt-8">
-                {tab === "events" && <EventsAdmin user={user} />}
-                {tab === "results" && <ResultsAdmin user={user} />}
-                {tab === "verify" && <VerifyAdmin user={user} />}
-                {tab === "rules" && user.role === "nzdra_admin" && <RulesAdmin />}
-                {tab === "news" && user.role === "nzdra_admin" && <NewsAdmin />}
-            </div>
+            <div className="mt-8 text-zinc-500">Dashboard modules loading...</div>
         </div>
     );
 }
