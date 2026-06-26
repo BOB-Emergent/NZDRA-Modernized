@@ -5,21 +5,22 @@ const AuthCtx = createContext(null);
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const token = localStorage.getItem("nzdra_token");
-        if (token) {
-            api.get("/auth/me")
-                .then(({ data }) => setUser(data))
-                .catch(() => { localStorage.removeItem("nzdra_token"); });
-        }
+        if (!token) { setLoading(false); return; }
+        api.get("/auth/me")
+            .then((r) => setUser(r.data))
+            .catch(() => localStorage.removeItem("nzdra_token"))
+            .finally(() => setLoading(false));
     }, []);
 
     const login = async (email, password) => {
         const { data } = await api.post("/auth/login", { email, password });
-        localStorage.setItem("nzdra_token", data.token);
-        const me = await api.get("/auth/me");
-        setUser(me.data);
+        localStorage.setItem("nzdra_token", data.access_token);
+        setUser(data.user);
+        return data.user;
     };
 
     const logout = () => {
@@ -27,7 +28,11 @@ export function AuthProvider({ children }) {
         setUser(null);
     };
 
-    return <AuthCtx.Provider value={{ user, login, logout }}>{children}</AuthCtx.Provider>;
+    return (
+        <AuthCtx.Provider value={{ user, loading, login, logout }}>
+            {children}
+        </AuthCtx.Provider>
+    );
 }
 
 export const useAuth = () => useContext(AuthCtx);
