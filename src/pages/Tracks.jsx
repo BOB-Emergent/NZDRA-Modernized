@@ -19,18 +19,23 @@ export default function Tracks() {
     const mode = loc.pathname.startsWith("/dragcentral") ? "dragcentral" : "nzdra";
     const [tracks, setTracks] = useState([]);
 
-    useEffect(() => { api.get("/tracks").then((r) => setTracks(r.data)); }, []);
+    useEffect(() => {
+        api.get("/tracks")
+            .then((r) => setTracks(Array.isArray(r.data) ? r.data : []))
+            .catch(() => setTracks([]));
+    }, []);
 
     return mode === "dragcentral" ? <DragCentralView tracks={tracks} /> : <NZDRAView tracks={tracks} />;
 }
 
-function DragCentralView({ tracks }) {
+function DragCentralView({ tracks = [] }) {
     const [bodyFilter, setBodyFilter] = useState("all");
 
     const byCountry = useMemo(() => {
+        const data = Array.isArray(tracks) ? tracks : [];
         const filtered = bodyFilter === "all"
-            ? tracks
-            : tracks.filter((t) =>
+            ? data
+            : data.filter((t) =>
                 bodyFilter === "unsanctioned"
                     ? (t.sanctioning_bodies || []).length === 0
                     : (t.sanctioning_bodies || []).includes(bodyFilter),
@@ -46,7 +51,7 @@ function DragCentralView({ tracks }) {
 
     const allBodies = useMemo(() => {
         const s = new Set();
-        tracks.forEach((t) => (t.sanctioning_bodies || []).forEach((b) => s.add(b)));
+        (Array.isArray(tracks) ? tracks : []).forEach((t) => (t.sanctioning_bodies || []).forEach((b) => s.add(b)));
         return Array.from(s).sort();
     }, [tracks]);
 
@@ -81,7 +86,7 @@ function DragCentralView({ tracks }) {
                             active={bodyFilter === b}
                             onClick={() => setBodyFilter(b)}
                             color={(BODY_STYLES[b] || UNSANCTIONED).color}
-                            testid={`dc-filter-${b.toLowerCase()}`}
+                            testid={`dc-filter-${(b || "").toLowerCase()}`}
                         >
                             {b}
                         </FilterChip>
@@ -95,7 +100,7 @@ function DragCentralView({ tracks }) {
                     <div className="text-zinc-500">No strips match this filter.</div>
                 )}
                 {Object.entries(byCountry).map(([country, list]) => (
-                    <section key={country} className="mb-12" data-testid={`dc-country-${country.toLowerCase()}`}>
+                    <section key={country} className="mb-12" data-testid={`dc-country-${(country || "").toLowerCase()}`}>
                         <h2 className="font-display text-2xl uppercase tracking-tight text-white mb-5 flex items-center gap-3">
                             <span>{countryLabel(country)}</span>
                             <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">{list.length} strips</span>
@@ -110,10 +115,11 @@ function DragCentralView({ tracks }) {
     );
 }
 
-function NZDRAView({ tracks }) {
+function NZDRAView({ tracks = [] }) {
     const [showOthers, setShowOthers] = useState(false);
-    const members = tracks.filter((t) => (t.sanctioning_bodies || []).includes("NZDRA"));
-    const others = tracks.filter((t) => !(t.sanctioning_bodies || []).includes("NZDRA"));
+    const data = Array.isArray(tracks) ? tracks : [];
+    const members = data.filter((t) => (t.sanctioning_bodies || []).includes("NZDRA"));
+    const others = data.filter((t) => !(t.sanctioning_bodies || []).includes("NZDRA"));
 
     return (
         <div data-testid="tracks-page-nzdra">
@@ -209,8 +215,9 @@ function TrackCard({ track, compact = false, neutral = false }) {
     );
 }
 
-function BodyBadges({ bodies, slug }) {
-    if (!bodies || bodies.length === 0) {
+function BodyBadges({ bodies = [], slug }) {
+    const data = Array.isArray(bodies) ? bodies : [];
+    if (data.length === 0) {
         return (
             <span
                 className="px-2 py-0.5 border text-[9px] font-mono uppercase tracking-widest"
@@ -223,14 +230,14 @@ function BodyBadges({ bodies, slug }) {
     }
     return (
         <div className="flex flex-wrap gap-1 justify-end">
-            {bodies.map((b) => {
+            {data.map((b) => {
                 const s = BODY_STYLES[b] || { color: "#a1a1aa", label: b };
                 return (
                     <span
                         key={b}
                         className="px-2 py-0.5 border text-[9px] font-mono uppercase tracking-widest"
                         style={{ borderColor: s.color, color: s.color }}
-                        data-testid={`track-badge-${b.toLowerCase()}-${slug}`}
+                        data-testid={`track-badge-${(b || "").toLowerCase()}-${slug}`}
                         title={`${b} sanctioned`}
                     >
                         {s.label}
