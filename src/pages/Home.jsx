@@ -15,9 +15,15 @@ export default function Home() {
 
     useEffect(() => {
         const today = new Date().toISOString().slice(0, 10);
-        api.get("/events", { params: { from_date: today } }).then((r) => setNextEvents(r.data.slice(0, 4)));
-        api.get("/news", { params: { limit: 3 } }).then((r) => setLatestNews(r.data));
-        api.get("/results", { params: { limit: 5 } }).then((r) => setLatestResults(r.data));
+        api.get("/events", { params: { from_date: today } })
+            .then((r) => setNextEvents(Array.isArray(r.data) ? r.data.slice(0, 4) : []))
+            .catch(() => setNextEvents([]));
+        api.get("/news", { params: { limit: 3 } })
+            .then((r) => setLatestNews(Array.isArray(r.data) ? r.data : []))
+            .catch(() => setLatestNews([]));
+        api.get("/results", { params: { limit: 5 } })
+            .then((r) => setLatestResults(Array.isArray(r.data) ? r.data : []))
+            .catch(() => setLatestResults([]));
     }, []);
 
     return (
@@ -83,7 +89,6 @@ export default function Home() {
                         </motion.div>
                     </div>
 
-                    {/* Logo flip showcase */}
                     <div className="lg:col-span-5 flex flex-col items-center">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
@@ -102,13 +107,10 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* Christmas tree strip */}
             <div className="h-1 bg-gradient-to-r from-amber-500 via-amber-500 to-green-500" />
 
-            {/* Sponsor marquee */}
             <SponsorWall marquee />
 
-            {/* Quick stats bar */}
             <section className="border-b border-white/10 bg-black">
                 <div className="max-w-[1400px] mx-auto px-6 md:px-12 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
                     {[
@@ -125,7 +127,6 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* Next events */}
             <section className="max-w-[1400px] mx-auto px-6 md:px-12 py-20">
                 <div className="flex items-end justify-between mb-10">
                     <div>
@@ -145,7 +146,7 @@ export default function Home() {
                             key={e.id}
                             to="/calendar"
                             className="group relative bg-zinc-900 border border-zinc-800 hover:border-nzdra-red p-6 transition-colors"
-                            data-testid={`next-event-${e.track.toLowerCase()}`}
+                            data-testid={`next-event-${(e.track || "track").toLowerCase()}`}
                         >
                             <Calendar size={20} className="text-nzdra-red" />
                             <div className="mt-4 font-display text-3xl text-white leading-tight uppercase">
@@ -158,9 +159,8 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* Latest results + AI rulebook teaser */}
             <section className="border-y border-white/10 bg-zinc-950/50">
-                <div className="relative max-w-[1400px] mx-auto px-6 md:px-12 py-20 grid lg:grid-cols-3 gap-12">
+                <div className="max-w-[1400px] mx-auto px-6 md:px-12 py-20 grid lg:grid-cols-3 gap-12">
                     <div className="lg:col-span-2">
                         <div className="font-mono text-xs uppercase tracking-[0.4em] text-nzdra-red mb-2">Latest Times</div>
                         <h2 className="font-display text-4xl uppercase tracking-tight text-white mb-8 flex items-center gap-3">
@@ -185,8 +185,8 @@ export default function Home() {
                                             <td className="px-4 py-3 text-zinc-300">{r.track}</td>
                                             <td className="px-4 py-3 text-zinc-300">{r.race_class}</td>
                                             <td className="px-4 py-3 text-white font-medium">{r.driver}</td>
-                                            <td className="px-4 py-3 text-right font-mono text-green-400">{r.et.toFixed(3)}</td>
-                                            <td className="px-4 py-3 text-right font-mono text-green-400">{r.mph.toFixed(2)}</td>
+                                            <td className="px-4 py-3 text-right font-mono text-green-400">{(r.et || 0).toFixed(3)}</td>
+                                            <td className="px-4 py-3 text-right font-mono text-green-400">{(r.mph || 0).toFixed(2)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -197,7 +197,6 @@ export default function Home() {
                         </Link>
                     </div>
 
-                    {/* AI rulebook teaser */}
                     <div className="relative">
                         <div className="absolute -inset-1 race-stripes opacity-30" />
                         <div className="relative bg-black border border-amber-500/40 p-8">
@@ -220,7 +219,6 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* News */}
             <section className="max-w-[1400px] mx-auto px-6 md:px-12 py-20">
                 <div className="flex items-end justify-between mb-10">
                     <div>
@@ -250,7 +248,6 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* Sponsor grid */}
             <section className="border-t border-white/10 bg-zinc-950/50">
                 <div className="max-w-[1400px] mx-auto px-6 md:px-12 py-20">
                     <div className="font-mono text-xs uppercase tracking-[0.4em] text-nzdra-red mb-2 text-center">With Thanks To</div>
@@ -267,6 +264,8 @@ export default function Home() {
 }
 
 function formatDate(iso) {
+    if (!iso) return "COMING SOON";
     const d = new Date(iso);
+    if (isNaN(d.getTime())) return "TBA";
     return d.toLocaleDateString("en-NZ", { day: "2-digit", month: "short" }).toUpperCase();
 }
