@@ -24,12 +24,12 @@ import FloatingTreena from "./components/FloatingTreena";
 
 export default function App() {
     return (
-        <div className="App min-h-screen bg-zinc-950 text-zinc-300">
+        <div className="App min-h-screen bg-zinc-950 text-zinc-300 overflow-x-hidden">
             <BrowserRouter>
                 <TenantProvider>
                     <AuthProvider>
                         <Navbar />
-                        <main>
+                        <main className="relative z-10">
                             <Routes>
                                 {/* Central NZDRA hub */}
                                 <Route path="/" element={<Home />} />
@@ -57,7 +57,7 @@ export default function App() {
                         </main>
                         <Footer />
                         <FloatingTreena />
-                        <Toaster theme="dark" position="top-right" />
+                        <Toaster theme="dark" position="top-right" expand={false} richColors />
                     </AuthProvider>
                 </TenantProvider>
             </BrowserRouter>
